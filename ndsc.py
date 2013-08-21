@@ -17,8 +17,9 @@ import signal
 import sys
 
 # Globals initialization
-pos_cur = 1
-pos_top = 1
+pos_cur = 0
+pos_top = 0
+viewed_transaction = None
 
 # Functions
 
@@ -78,7 +79,7 @@ def init_ui():
     curses.cbreak()
 
 def redraw():
-    global pos_cur, pos_top
+    global pos_cur, pos_top, viewed_transaction, rows
 
     max_y, max_x = screen.getmaxyx()
     rows = max_y - 6
@@ -89,6 +90,17 @@ def redraw():
     # Resizing or scrolling up
     if pos_cur - pos_top > rows or pos_cur < pos_top:
         pos_top = pos_cur
+    # Out-of-range safeguards 
+    if pos_cur < 0:
+        pos_cur = 0
+        pos_top = 0
+    if pos_cur >= len(transactions):
+        pos_cur = len(transactions) - 1
+        pos_top = max(0, pos_cur - rows)
+    if pos_top < 0:
+        pos_top = 0
+    if pos_top > len(transactions) - rows:
+        pos_top = len(transactions) - rows
 
     screen.erase()
     
@@ -118,7 +130,7 @@ def redraw():
             screen.addstr(2 + i, 3, trn.subject)
 
 def main_loop():
-    global pos_cur, pos_top
+    global pos_cur, pos_top, viewed_transaction
 
     screen.nodelay(True)
     screen.keypad(True)
@@ -127,12 +139,25 @@ def main_loop():
     while True:
         ch = screen.getch()
 
-        if ch == ord('q'):
-            return
-        if ch == curses.KEY_DOWN:
-            pos_cur += 1
-        if ch == curses.KEY_UP:
-            pos_cur -= 1
+        if viewed_transaction == None:
+            if ch == ord('q'):
+                return
+            if ch == curses.KEY_DOWN:
+                pos_cur += 1
+            if ch == curses.KEY_UP:
+                pos_cur -= 1
+            if ch == curses.KEY_PPAGE:
+                pos_top -= rows
+                pos_cur -= rows
+            if ch == curses.KEY_NPAGE:
+                pos_top += rows
+                pos_cur += rows
+            if ch == curses.KEY_HOME:
+                pos_cur = 0
+                pos_top = 0
+            if ch == curses.KEY_END:
+                pos_cur = len(transactions) - 1
+                pos_top = pos_cur - rows
 
         redraw()
 
