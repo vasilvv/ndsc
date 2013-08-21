@@ -129,6 +129,9 @@ def redraw():
         else:
             screen.addstr(2 + i, 3, trn.subject)
 
+    footer = " %i/%i " % (pos_cur + 1, len(transactions))
+    screen.addstr(max_y-2, 6, footer)
+
 def main_loop():
     global pos_cur, pos_top, viewed_transaction
 
