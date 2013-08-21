@@ -88,10 +88,11 @@ def pad(text, maxlen, right=False):
 def format_transaction_row(trn, width):
     number_column_len = len(str(max_number))
     sender_column_len = min(width // 4, max_sender_len)
-    subject_column_len = width - number_column_len - sender_column_len - 10
+    date_column_len = 19 if 19 <= width // 4 else 10
+    subject_column_len = width - number_column_len - sender_column_len - date_column_len - 14
     if subject_column_len < 0:
         # Terminal is too narrow, give up
-        return "!"
+        return ""
 
     def truncate_column(text, maxlen):
         if len(text) <= maxlen:
@@ -102,7 +103,8 @@ def format_transaction_row(trn, width):
     number_column = pad(str(trn.number), number_column_len, True)
     sender_column = truncate_column(trn.signature, sender_column_len)
     subject_column = truncate_column(trn.subject, subject_column_len)
-    return " %s    %s    %s " % (number_column, sender_column, subject_column)
+    date_column = trn.date_entered.isoformat(' ')[0:date_column_len]
+    return " %s    %s    %s    %s " % (number_column, sender_column, subject_column, date_column)
 
 def redraw():
     global pos_cur, pos_top, viewed_transaction, rows
