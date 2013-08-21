@@ -106,6 +106,29 @@ def format_transaction_row(trn, width):
     date_column = trn.date_entered.isoformat(' ')[0:date_column_len]
     return " %s    %s    %s    %s " % (number_column, sender_column, subject_column, date_column)
 
+def draw_window_borders(y, x, bottom_y, right_x, erase=False):
+    # Corners of the main window
+    screen.addstr(y, x, '┌')
+    screen.addstr(bottom_y, x, '└')
+    screen.addstr(y, right_x, '┐')
+    screen.addstr(bottom_y, right_x, '┘')
+
+    # Borders of the main window
+    for i in range(y+1, bottom_y):
+        screen.addstr(i, x, '│')
+        screen.addstr(i, right_x, '│')
+    for i in range(x+1, right_x):
+        screen.addstr(y, i, '─')
+        screen.addstr(bottom_y, i, '─')
+
+    if erase:
+        filler = " " * (right_x - x - 1)
+        for i in range(y+1, bottom_y):
+            screen.addstr(i, x+1, filler)
+
+def get_transaction_lines(trn):
+    return trn.text.replace('\t', '    ').split('\n')
+
 def redraw():
     global pos_cur, pos_top, viewed_transaction, rows
 
@@ -130,23 +153,12 @@ def redraw():
         pos_top = 0
 
     screen.erase()
-    
-    # Corners of the main window
-    screen.addstr(1, 1, '┌')
-    screen.addstr(max_y-2, 1, '└')
-    screen.addstr(1, max_x-2, '┐')
-    screen.addstr(max_y-2, max_x-2, '┘')
 
-    # Borders of the main window
-    for i in range(2, max_y-2):
-        screen.addstr(i, 1, '│')
-        screen.addstr(i, max_x-2, '│')
-    for i in range(2, max_x-2):
-        screen.addstr(1, i, '─')
-        screen.addstr(max_y-2, i, '─')
+    # Main window borders
+    draw_window_borders(1, 1, max_y - 2, max_x - 2)
 
+    # Transaction list
     current_transactions = transactions[pos_top:pos_top + rows + 1]
-
     for i in range(0, len(current_transactions)):
         cur = pos_cur - pos_top == i
         trn = current_transactions[i]
@@ -159,8 +171,26 @@ def redraw():
     footer = " %i/%i " % (pos_cur + 1, len(transactions))
     screen.addstr(max_y-2, 6, footer)
 
+    if viewed_transaction:
+        global textpos_y, textpos_x
+
+        # Scrolling logic
+        if textpos_y < 0:
+            textpos_y = 0
+        if textpos_x < 0:
+            textpos_x = 0
+
+        draw_window_borders(3, 5, max_y - 4, max_x - 6, True)
+        lines = get_transaction_lines(viewed_transaction)
+        for i in range(0, rows-2):
+            try:
+                screen.addstr(4+i, 7, lines[textpos_y+i][textpos_x:max_x-15+textpos_x])
+            except IndexError:
+                break
+
 def main_loop():
     global pos_cur, pos_top, viewed_transaction
+    global textpos_y, textpos_x
     global max_number, max_sender_len
 
     screen.nodelay(False)
@@ -193,6 +223,21 @@ def main_loop():
             if ch == curses.KEY_END:
                 pos_cur = len(transactions) - 1
                 pos_top = pos_cur - rows
+            if ch == ord("\n"):
+                viewed_transaction = transactions[pos_cur]
+                viewed_transaction.text = viewed_transaction.get_text()
+                textpos_y = textpos_x = 0
+        else:
+            if ch == ord('q'):
+                viewed_transaction = None
+            if ch == curses.KEY_DOWN:
+                textpos_y += 1
+            if ch == curses.KEY_UP:
+                textpos_y -= 1
+            if ch == curses.KEY_RIGHT:
+                textpos_x += 1
+            if ch == curses.KEY_LEFT:
+                textpos_x -= 1
 
         redraw()
 
