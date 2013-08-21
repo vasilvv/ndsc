@@ -135,7 +135,7 @@ def redraw():
 def main_loop():
     global pos_cur, pos_top, viewed_transaction
 
-    screen.nodelay(True)
+    screen.nodelay(False)
     screen.keypad(True)
     redraw()
 
