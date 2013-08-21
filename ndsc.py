@@ -78,6 +78,32 @@ def init_ui():
     curses.noecho()
     curses.cbreak()
 
+def pad(text, maxlen, right=False):
+    padding = " " * (maxlen - len(text))
+    if right:
+        return padding + text
+    else:
+        return text + padding
+
+def format_transaction_row(trn, width):
+    number_column_len = len(str(max_number))
+    sender_column_len = min(width // 4, max_sender_len)
+    subject_column_len = width - number_column_len - sender_column_len - 10
+    if subject_column_len < 0:
+        # Terminal is too narrow, give up
+        return "!"
+
+    def truncate_column(text, maxlen):
+        if len(text) <= maxlen:
+            return pad(text, maxlen)
+        else:
+            return text[0:maxlen-1] + '…'
+
+    number_column = pad(str(trn.number), number_column_len, True)
+    sender_column = truncate_column(trn.signature, sender_column_len)
+    subject_column = truncate_column(trn.subject, subject_column_len)
+    return " %s    %s    %s " % (number_column, sender_column, subject_column)
+
 def redraw():
     global pos_cur, pos_top, viewed_transaction, rows
 
@@ -122,20 +148,25 @@ def redraw():
     for i in range(0, len(current_transactions)):
         cur = pos_cur - pos_top == i
         trn = current_transactions[i]
+        text = format_transaction_row(trn, max_x - 6)
         if cur:
-            spaces = " " * (max_x - 6 - len(trn.subject))
-            screen.addstr(2 + i, 3, trn.subject + spaces, curses.A_REVERSE)
+            screen.addstr(2 + i, 3, text, curses.A_REVERSE)
         else:
-            screen.addstr(2 + i, 3, trn.subject)
+            screen.addstr(2 + i, 3, text)
 
     footer = " %i/%i " % (pos_cur + 1, len(transactions))
     screen.addstr(max_y-2, 6, footer)
 
 def main_loop():
     global pos_cur, pos_top, viewed_transaction
+    global max_number, max_sender_len
 
     screen.nodelay(False)
     screen.keypad(True)
+
+    max_number = max(trn.number for trn in transactions)
+    max_sender_len = max(len(trn.signature) for trn in transactions)
+
     redraw()
 
     while True:
