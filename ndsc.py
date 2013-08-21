@@ -96,11 +96,10 @@ def redraw():
         pos_top = 0
     if pos_cur >= len(transactions):
         pos_cur = len(transactions) - 1
-        pos_top = max(0, pos_cur - rows)
+    if pos_top > len(transactions) - rows:
+        pos_top = len(transactions) - rows - 1 
     if pos_top < 0:
         pos_top = 0
-    if pos_top > len(transactions) - rows:
-        pos_top = len(transactions) - rows
 
     screen.erase()
     
