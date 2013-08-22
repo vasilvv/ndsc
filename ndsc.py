@@ -188,6 +188,12 @@ def redraw():
             except IndexError:
                 break
 
+def handle_transaction_view():
+    global textpos_y, textpos_x, viewed_transaction
+    viewed_transaction = transactions[pos_cur]
+    viewed_transaction.text = viewed_transaction.get_text()
+    textpos_y = textpos_x = 0
+
 def main_loop():
     global pos_cur, pos_top, viewed_transaction
     global textpos_y, textpos_x
@@ -223,10 +229,8 @@ def main_loop():
             if ch == curses.KEY_END:
                 pos_cur = len(transactions) - 1
                 pos_top = pos_cur - rows
-            if ch == ord("\n"):
-                viewed_transaction = transactions[pos_cur]
-                viewed_transaction.text = viewed_transaction.get_text()
-                textpos_y = textpos_x = 0
+            if ch == ord('\n'):
+                handle_transaction_view()
         else:
             if ch == ord('q'):
                 viewed_transaction = None
@@ -235,9 +239,23 @@ def main_loop():
             if ch == curses.KEY_UP:
                 textpos_y -= 1
             if ch == curses.KEY_RIGHT:
-                textpos_x += 1
+                textpos_x += 5
             if ch == curses.KEY_LEFT:
-                textpos_x -= 1
+                textpos_x -= 5
+            if ch == ord('\n'):
+                textpos_y += 1
+            if ch == ord(' '):
+                textpos_y += rows - 5
+            if ch == curses.KEY_NPAGE:
+                textpos_y += rows - 2
+            if ch == curses.KEY_PPAGE:
+                textpos_y -= rows - 2
+            if ch == ord('['):
+                pos_cur -= 1
+                handle_transaction_view()
+            if ch == ord(']'):
+                pos_cur += 1
+                handle_transaction_view()
 
         redraw()
 
