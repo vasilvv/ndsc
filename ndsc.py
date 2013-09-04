@@ -32,7 +32,7 @@ def die(reason = ""):
     except:
         pass
 
-    if screen != "":
+    if reason != "":
         print(reason, file=sys.stderr)
         sys.exit(1)
     else:
