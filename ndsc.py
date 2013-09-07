@@ -182,6 +182,10 @@ def redraw():
 
         draw_window_borders(3, 5, max_y - 4, max_x - 6, True)
         lines = get_transaction_lines(viewed_transaction)
+
+        text_lines = rows - 2
+        if textpos_y + text_lines > len(lines):
+            textpos_y = max(0, len(lines) - text_lines)
         for i in range(0, rows-2):
             try:
                 screen.addstr(4+i, 7, lines[textpos_y+i][textpos_x:max_x-15+textpos_x])
