@@ -65,7 +65,7 @@ def init_meeting():
     global client, meeting, transactions
 
     try:
-        client = discuss.Client(server)
+        client = discuss.Client(server, timeout = 5)
         meeting = discuss.Meeting(client, path)
         transactions = list(meeting.transactions(feedback=ProgressDisplay().display_progress))
     except Exception as err:
